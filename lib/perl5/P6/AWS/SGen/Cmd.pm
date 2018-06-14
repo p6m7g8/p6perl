@@ -208,7 +208,7 @@ sub shell_service() {
   $service;
 }
 
-sub tmpl_paths { "/tmp/aws/tt" }
+sub tmpl_paths { "$ENV{PERL5LIB}/../../tt" }
 
 sub tmpl { "aws_func.tt" }
 sub uwtmpl { "aws_uw_func.tt" }
