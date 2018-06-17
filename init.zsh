@@ -10,6 +10,6 @@ p6df::modules::p6perl::init() {
 p6_perl_init() {
     local dir="$1"
 
-    p6dfz::util::path_if "$dir/bin"
+    p6df::util::path_if "$dir/bin"
     export PERL5LIB=$dir/lib/perl5
 }
