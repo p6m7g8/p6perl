@@ -36,7 +36,8 @@ sub _post_init {
 
   my $security_group_id = $self->security_group_id();
 
-  my ($rv, $json_str) = P6::Util::execute("aws ec2 describe-security-groups --group-ids $security_group_id", { output => 1, silent => 1 });
+  no strict;
+  my ($rv, $json_str) = P6::Util::execute("aws --output json ec2 describe-security-groups --group-ids $security_group_id", { output => 1, silent => 1 });
 
   my $json = JSON->new()->allow_nonref()->pretty();
   my $scalar  = eval { $json->decode($json_str) };
@@ -82,8 +83,6 @@ sub display {
       }
 
       print P6::Util::rprint(17, $ip_range->{CidrIp});
-      print " (COIN)" if $ip_range->{CidrIp} eq "10.0.0.0/8";
-      print " (VPN)"  if $ip_range->{CidrIp} eq "172.18.0.0/15" || $ip_range->{CidrIp} eq "172.28.0.0/16";
       print "\n";
     }
 
@@ -136,8 +135,6 @@ sub display {
       }
 
       print P6::Util::rprint(17, $ip_range->{CidrIp});
-      print " (COIN)" if $ip_range->{CidrIp} eq "10.0.0.0/8";
-      print " (VPN)"  if $ip_range->{CidrIp} eq "172.18.0.0/15" || $ip_range->{CidrIp} eq "172.28.0.0/16";
       print "\n";
     }
 
@@ -172,7 +169,6 @@ sub display {
       print "\n";
     }
   }
-
 
   return;
 }
