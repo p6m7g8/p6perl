@@ -16,7 +16,7 @@ use constant EXIT_DB_FAILURE                 => 2;
 use constant EXIT_ALLOWED => EXIT_SUCCESS;
 use constant EXIT_DENIED  => 4;
 
-use constant DEBUGGING => defined $ENV{P6DEBUG} && $ENV{P6DEBUG} == 1 ? 1 : 0;
+use constant DEBUGGING => defined $ENV{P6_DEBUG} && $ENV{P6_DEBUG} == 1 ? 1 : 0;
 
 use constant PORT_SSH => 22;
 use constant SSH_TIMEOUT => 1;
