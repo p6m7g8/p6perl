@@ -148,7 +148,7 @@ sub flags_args_parse {
 sub log_type_parse {
   my $self = shift;
 
-  my $log_type = $self->cmd_api_func() =~ /describe|list|get/ ? 'p6_log_and_run' : 'p6_log_or_run';
+  my $log_type = $self->cmd_api_func() =~ /describe|list|get/ ? 'p6_run_read_cmd' : 'p6_run_write_cmd';
   $self->log_type($log_type);
 }
 
