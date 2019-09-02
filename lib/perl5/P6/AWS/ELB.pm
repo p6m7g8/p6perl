@@ -56,26 +56,26 @@ sub display {
 
   my $listener_descriptions = $scalar->{ListenerDescriptions};
 
-  print "Listeners:\n";
+#  print "Listeners:\n";
   foreach my $listener_description (@$listener_descriptions) {
     my $listener = $listener_description->{Listener};
 
-    print "\t";
-    print P6::Util::rprint(5, "I/E");
+#    print "\t";
+#    print P6::Util::rprint(5, "I/E");
     print "\t" . $listener->{LoadBalancerPort};
     print " (" . $listener->{Protocol};
-    print ") -> (" . $listener->{InstancePort};
-    print ") " . $listener->{InstanceProtocol};
+    print ") -> " . $listener->{InstancePort};
+    print " (" . $listener->{InstanceProtocol};
+    print ")";
+    print "\n";
 
-    my $policies = $listener_description->{PolicyNames};
-    print "    [";
-    foreach my $policy_name (@$policies) {
-      print $policy_name . ",";
-    }
-    print "]\n";
+ #   my $policies = $listener_description->{PolicyNames};
+ #   print "    [";
+ #   foreach my $policy_name (@$policies) {
+ #     print $policy_name . ",";
+ #   }
+ #   print "]\n";
   }
-
-
 
   return;
 }
