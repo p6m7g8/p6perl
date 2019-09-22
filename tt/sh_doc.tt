@@ -1,0 +1,28 @@
+#<
+#
+# Function:
+#     [% IF rvs.0.name %]$rvs.0.name[% ELSE %]$rvs.0.type[% END %] = $name([% FOREACH arg = args %]$arg.name[% UNLESS loop.last %],[% END %][% END %])
+#
+[% IF args %]
+# Arg(s):
+[% FOREACH arg = args %]
+[% IF default %]
+#    $arg.name - $arg.comment default: $arg.default
+[% ELSE %]
+#    $arg.name - $arg.comment
+[% END %]
+[% END %]
+[% END %]
+#
+[% IF rvs %]
+# Return(s):
+[% FOREACH rv = rvs %]
+[% IF rv.type == "void" %]
+#    void - none
+[% ELSE %]
+#    $rv.name - $rv.comment
+[% END %]
+[% END %]
+[% END %]
+#
+#>
