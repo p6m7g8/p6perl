@@ -48,6 +48,13 @@ sub doc_gen() {
   my $self = shift;
   my %args = @_;
 
+  my $module = $self->module();
+  my $safe_module = (split /\//, $module)[-1];
+
+  my $tdir = "/tmp/p6/doc_gen-" . $safe_module;
+
+  P6::Util::mkdirp($tdir);
+
   my $funcs = $self->funcs();
   foreach my $fname (sort keys %{$self->funcs()}) {
     my $func = $funcs->{$fname};
@@ -57,7 +64,7 @@ sub doc_gen() {
     $opath =~ s#/#-#g;
     $opath =~ s/^-//;
 
-    $opath = "/tmp/$opath.txt";
+    $opath = "$tdir/$opath.txt";
 
     my $rv1 = P6::Template->render(
 				   $func,
@@ -68,11 +75,12 @@ sub doc_gen() {
 				  );
 
     $func->{doc_lines} = P6::IO::dread("$opath");
-    P6::Util::execute("$P6::Cmd::RM_F $opath", { silent => 1 });
     $self->funcs($funcs);
   }
 
   $self->funcs($funcs);
+
+  P6::Util::execute("$P6::Cmd::RM_F -r $tdir");
 
   return;
 }
@@ -82,7 +90,7 @@ sub splice_in() {
   my %args = @_;
 
   my $lib_dir = $self->module() . "/lib";
-  my $files = P6::IO::scan($lib_dir, "\.sh\$");
+  my $files = P6::IO::scan($lib_dir, "\.sh\$", files_only => 1);
   my $mark = "#" x 70;
 
   my $funcs = $self->funcs();
@@ -93,12 +101,13 @@ sub splice_in() {
     my $func = "";
     my @new_lines = ();
 
-    my @lines = grep { chomp } @{P6::IO::dread($file)};
+    my @lines = grep { chomp ; 1 } @{P6::IO::dread($file)};
     foreach my $line (@lines) {
       next if $line =~ /^$mark/;
       $doc_in = 1, next if $line =~ /^#</;
       $doc_in = 0, next if $line =~ /^#>/;
       next if $doc_in;
+      next if $line =~ /^#\//;
 
       if ($line =~ /^p6_/) {
 	my $fname = $line;
@@ -107,7 +116,8 @@ sub splice_in() {
 
 	$func = $funcs->{$fname};
 	push @new_lines, $mark;
-	push @new_lines, grep { chomp } @{$func->{doc_lines}};
+	push @new_lines, grep { chomp ; 1 } @{$func->{doc_lines}};
+	push @new_lines, grep { chomp ; 1 } @{$func->{extra_docs}};
 	push @new_lines, $mark;
       }
 
@@ -127,48 +137,77 @@ sub parse {
   my $lib_dir = $self->module() . "/lib";
   P6::Util::debug("lib_dir: $lib_dir\n");
 
-  my $files = P6::IO::scan($lib_dir, "\.sh\$");
+  my $files = P6::IO::scan($lib_dir, qr/\.sh$/, files_only => 1);
 
   my $funcs = {};
+  my $extra_docs = [];
   foreach my $file (sort @$files) {
+    P6::Util::debug("FILE: $file\n");
     my $func = "";
+    my $in_func = 1;
+    my $arg_end = 0;
 
     my $lines = P6::IO::dread($file);
     foreach my $line (@$lines) {
+
+      if ($line =~ /^#\//) {
+	push @$extra_docs, $line;
+      }
+
       if ($line =~ /^p6_/) {
+	$in_func = 1;
+
 	$line =~ s/\s+.*//g;
 	$func = $line;
 
 	my $name = $func;
 	$name =~ s/\(\)//;
+	P6::Util::debug("\tFUNC: $name\n");
 
 	$funcs->{$func}->{name} = $name;
 	$funcs->{$func}->{file} = $file;
+	$funcs->{$func}->{extra_docs} = $extra_docs;
+	$extra_docs = [];
       }
 
-      if ($line =~ /^\s+local ([a-zA-Z_][a-zA-z0-9_]+)="/) {
+      if ($in_func && $line =~ /^\s+$/) {
+	$arg_end = 1;
+      }
+
+      if (!$arg_end && $line =~ /^\s+local ([a-zA-Z_][a-zA-z0-9_]+)=/) {
 	my $arg = $1;
 
 	my $default = "";
 	$default = $1 if $line =~ /:-([^}]+)\}/;
-	P6::Util::debug("$func: $arg - default[$default]\n");
+
 	my $comment = "";
 	$comment = $1 if $line =~ /# (.*)$/;
 
+	P6::Util::debug("\tARG: name => $arg, default => $default, comment => $comment\n");
 	push @{$funcs->{$func}->{args}}, { name => $arg, default => $default, comment => $comment };
       }
 
       if ($line =~ /p6_return(_bool|_int|_void)?(?: \"([^\"]+)\")?/) {
 	my ($type, $val) = ($1, $2);
-	$type =~ s/^_// if $type;
+	$type = "str" unless $type;
+	$type =~ s/^_//;
+	$val = "" unless $val;
 
 	my $comment = "";
 	$comment = $1 if $line =~ /# (.*)$/;
 
+	P6::Util::debug("\tRV: name => $val, comment => $comment, type => $type\n");
 	push @{$funcs->{$func}->{rvs}}, { name => $val, comment => $comment, type => $type };
+      }
+
+      if ($line =~ /^}$/) {
+	$in_func = 0;
+	$arg_end = 0;
       }
     }
   }
+
+  delete $funcs->{""};
 
   $self->funcs($funcs);
 

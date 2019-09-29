@@ -62,11 +62,14 @@ sub dwrite {
 }
 
 sub scan {
-  my ($dir, $regex) = @_;
+  my ($dir, $regex, %args) = @_;
 
   my @files = ();
   File::Find::find sub {
     return unless /$regex/;
+    if ($args{files_only}) {
+      return if -d;
+    }
     push @files, $File::Find::name;
   }, $dir;
 

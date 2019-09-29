@@ -1,7 +1,7 @@
 #<
 #
 # Function:
-#     [% IF rvs.0.name %]$rvs.0.name[% ELSE %]$rvs.0.type[% END %] = $name([% FOREACH arg = args %]$arg.name[% UNLESS loop.last %],[% END %][% END %])
+#     [% IF rvs.0.name %]$rvs.0.name[% ELSE %]$rvs.0.type[% END %] = $name([% FOREACH arg = args %][% IF arg.default %][[% END %]$arg.name[% IF arg.default %]][% END %][% UNLESS loop.last %], [% END %][% END %])
 #
 [% IF args %]
 # Arg(s):

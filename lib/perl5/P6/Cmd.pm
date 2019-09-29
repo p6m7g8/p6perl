@@ -51,9 +51,9 @@ our $ZPOOL   = "/sbin/zpool";
 
 our $GMAKE   = "/usr/local/bin/gmake";
 our $GPG     = $^O =~ /cygwin/ ? "/bin/gpg" :
-               $^O =~ /linux/  ? "/usr/bin/gpg" :
-               $^O =~ /darwin/ ? "/opt/local/bin/gpg" :
-               "/usr/local/bin/gpg";
+	       $^O =~ /linux/  ? "/usr/bin/gpg" :
+	       $^O =~ /darwin/ ? "/opt/local/bin/gpg" :
+	       "/usr/local/bin/gpg";
 our $SVN     = $^O =~ /linux/ ? "/usr/bin/svn" : "/usr/local/bin/svn";
 our $MYSQL   = "/usr/local/bin/mysql";
 our $MYSQLDUMP = "/usr/local/bin/mysqldump";
