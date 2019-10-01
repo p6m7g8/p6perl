@@ -15,7 +15,6 @@ use Carp;
 ## SDK
 use P6::Cmd ();
 use P6::IO ();
-use P6::Template ();
 use P6::Util ();
 
 ## Constants
@@ -42,7 +41,63 @@ sub _post_init {
   return;
 }
 
-sub tmpl_paths { "$ENV{PERL5LIB}/../../tt" }
+sub doc_gen_func {
+  my $func = shift;
+
+  my $rvs = $func->{rvs};
+  my $rv = $rvs->[0];
+
+  my $args = $func->{args};
+
+  my $str = "#\t";
+
+  if ($rv) {
+    {
+      no warnings qw(uninitialized);
+      $str .= $rv->{type};
+      $str .= "($rv->{name})" if $func->{type} ne "void";
+    }
+    $str .= " = ";
+  }
+
+  $str .= "$func->{name}";
+
+  $str .= "(";
+  foreach my $arg (@$args) {
+    $str .= "[" if $arg->{default};
+    $str .= "$arg->{name}";
+    $str .= "=$arg->{default}" if $arg->{default};
+    $str .= "]" if $arg->{default};
+    $str .= ",";
+  }
+  $str =~ s/,$/)/;
+
+  $str;
+}
+
+sub doc_gen_args {
+  my $args = shift;
+
+  my $str = "";
+  foreach my $arg (@$args) {
+    no warnings qw(uninitialized);
+    $str .= "#\t$arg->{name} - $arg->{comment}\n";
+  }
+
+  $str;
+}
+
+sub doc_gen_returns {
+  my $rvs = shift;
+
+  my $str = "";
+  foreach my $rv (@$rvs) {
+    no warnings qw(uninitialized);
+    $str .= "#\t$rv->{type} - $rv->{name}\n";
+  }
+
+  $str;
+}
 
 sub doc_gen() {
   my $self = shift;
@@ -51,36 +106,33 @@ sub doc_gen() {
   my $module = $self->module();
   my $safe_module = (split /\//, $module)[-1];
 
-  my $tdir = "/tmp/p6/doc_gen-" . $safe_module;
-
-  P6::Util::mkdirp($tdir);
-
   my $funcs = $self->funcs();
   foreach my $fname (sort keys %{$self->funcs()}) {
     my $func = $funcs->{$fname};
 
-    my $opath = $func->{file} . "-" . $func->{name};
-    $opath =~ s/\.//g;
-    $opath =~ s#/#-#g;
-    $opath =~ s/^-//;
+    ## build
+    my @doc_lines = ();
+    push @doc_lines, "#<";
+    push @doc_lines, "#";
+    push @doc_lines, "# Function:";
+    push @doc_lines, doc_gen_func($func);
+    push @doc_lines, "#";
 
-    $opath = "$tdir/$opath.txt";
+    if ($func->{args}) {
+      push @doc_lines, "#  Args:";
+      push @doc_lines, doc_gen_args($func->{args});
+      push @doc_lines, "#";
+    }
+    if ($func->{rv}) {
+      push @doc_lines, "#  Returns:";
+      push @doc_lines, doc_gen_returns($func->{rvs});
+      push @doc_lines, "#>";
+    }
 
-    my $rv1 = P6::Template->render(
-				   $func,
-				   %args,
-				   paths  => $self->tmpl_paths(),
-				   ifile  => "sh_doc.tt",
-				   output => $opath,
-				  );
-
-    $func->{doc_lines} = P6::IO::dread("$opath");
-    $self->funcs($funcs);
+    $func->{doc_lines} = \@doc_lines;
   }
 
   $self->funcs($funcs);
-
-  P6::Util::execute("$P6::Cmd::RM_F -r $tdir");
 
   return;
 }
@@ -134,6 +186,10 @@ sub splice_in() {
 sub parse {
   my $self = shift;
 
+  my @types = (qw(array bool code false hash int list size str true void));
+  my $types_re = join '|', @types;
+  P6::Util::debug("types_re=[$types_re]\n");
+
   my $lib_dir = $self->module() . "/lib";
   P6::Util::debug("lib_dir: $lib_dir\n");
 
@@ -175,29 +231,37 @@ sub parse {
       }
 
       if (!$arg_end && $line =~ /^\s+local ([a-zA-Z_][a-zA-z0-9_]+)=/) {
-	my $arg = $1;
+	my $arg = {};
+	$arg->{name} = $1;
 
-	my $default = "";
-	$default = $1 if $line =~ /:-([^}]+)\}/;
+	$arg->{default} = $1 if $line =~ /:-([^}]+)\}/;
+	$arg->{comment} = $1 if $line =~ /# (.*)$/;
 
-	my $comment = "";
-	$comment = $1 if $line =~ /# (.*)$/;
-
-	P6::Util::debug("\tARG: name => $arg, default => $default, comment => $comment\n");
-	push @{$funcs->{$func}->{args}}, { name => $arg, default => $default, comment => $comment };
+	P6::Util::debug_dumper("arg", $arg);
+	push @{$funcs->{$func}->{args}}, $arg;
       }
 
-      if ($line =~ /p6_return(_bool|_int|_void)?(?: \"([^\"]+)\")?/) {
-	my ($type, $val) = ($1, $2);
-	$type = "str" unless $type;
-	$type =~ s/^_//;
-	$val = "" unless $val;
+      my $rv = {};
+      if ($line =~ /^\s+p6_return_($types_re)/) {
+	$rv->{type} = $1;
+	P6::Util::debug("\treturn: $line");
 
-	my $comment = "";
-	$comment = $1 if $line =~ /# (.*)$/;
+	$rv->{name} = $1 if $line =~ /\"([^\"]+)\"/;
+      }
+      if ($line =~ /^\s+p6_return /) {
+	$rv->{type} = "unkown";
+	P6::Util::debug("\treturn_legacy: $line");
 
-	P6::Util::debug("\tRV: name => $val, comment => $comment, type => $type\n");
-	push @{$funcs->{$func}->{rvs}}, { name => $val, comment => $comment, type => $type };
+	$rv->{name} = $1 if $line =~ /\"([^\"]+)\"/;
+      }
+
+      if ($rv->{type}) {
+	$rv->{name} = "" unless $rv->{name};
+
+	$rv->{comment} = $1 if $line =~ /# (.*)$/;
+
+	P6::Util::debug_dumper("rv", $rv);
+	push @{$funcs->{$func}->{rvs}}, $rv;
       }
 
       if ($line =~ /^}$/) {
