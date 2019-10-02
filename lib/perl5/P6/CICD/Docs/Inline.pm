@@ -96,10 +96,7 @@ sub doc_gen_returns {
   my @non_voids = grep { $_->{type} ne "void" } @$rvs;
   return unless @non_voids;
 
-  my $str;
-
-  $str .= "#  Returns:\n";
-  P6::Util::debug_dumper("rvs", $rvs);
+  my $str = "#  Returns:\n";
 
   foreach my $rv (@$rvs) {
     no warnings qw(uninitialized);
@@ -216,7 +213,6 @@ sub parse {
 
     my $lines = P6::IO::dread($file);
     foreach my $line (@$lines) {
-
       if ($line =~ /^#\//) {
 	push @$extra_docs, $line;
       }
