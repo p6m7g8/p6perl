@@ -70,6 +70,8 @@ sub doc_gen_func {
   $str =~ s/, $/)/;
   $str .= ")" unless $str =~ /\)$/;
 
+  $str .= "#\n";
+
   $str;
 }
 
@@ -86,6 +88,7 @@ sub doc_gen_args {
     $str .= " [$arg->{default}]" if exists $arg->{default};
     $str .= "\n";
   }
+  $str .= "#\n";
 
   $str;
 }
@@ -110,12 +113,36 @@ sub doc_gen_returns {
   $str;
 }
 
+sub doc_gen_depends {
+  my $depends = shift;
+
+  my $str = "#  Depends:\n";
+
+  foreach my $depend (sort keys %$depends) {
+    $str .= "#\t$depend\n"
+  }
+  $str .= "#\n";
+
+  $str;
+}
+
+sub doc_gen_envs {
+  my $envs = shift;
+
+  my $str = "#  Environment:\n";
+
+  foreach my $env (sort keys %$envs) {
+    $str .= "#\t$env\n"
+  }
+
+  $str;
+}
+
 sub doc_gen() {
   my $self = shift;
   my %args = @_;
 
   my $module = $self->module();
-  my $safe_module = (split /\//, $module)[-1];
 
   my $funcs = $self->funcs();
   foreach my $fname (sort keys %{$self->funcs()}) {
@@ -125,16 +152,13 @@ sub doc_gen() {
     my @doc_lines = ();
     push @doc_lines, "#<";
     push @doc_lines, "#";
-    push @doc_lines, doc_gen_func($func);
-    push @doc_lines, "#";
 
-    if ($func->{args}) {
-      push @doc_lines, doc_gen_args($func->{args});
-      push @doc_lines, "#";
-    }
-    if ($func->{rvs}) {
-      push @doc_lines, doc_gen_returns($func->{rvs});
-    }
+    push @doc_lines, doc_gen_func($func);
+    push @doc_lines, doc_gen_args($func->{args})       if $func->{args};
+    push @doc_lines, doc_gen_returns($func->{rvs})     if $func->{rvs};
+    push @doc_lines, doc_gen_depends($func->{depends}) if $func->{depends};
+    push @doc_lines, doc_gen_envs($func->{envs})       if $func->{envs};
+
     push @doc_lines, "#>";
 
     $func->{doc_lines} = \@doc_lines;
@@ -172,7 +196,7 @@ sub splice_in() {
       if ($line =~ /^p6_/) {
 	my $fname = $line;
 	$fname =~ s/\s+.*//g;
-	P6::Util::debug("DEF: $fname\n");
+#	P6::Util::debug("DEF: $fname\n");
 
 	$func = $funcs->{$fname};
 	push @new_lines, $mark;
@@ -206,7 +230,7 @@ sub parse {
   my $funcs = {};
   my $extra_docs = [];
   foreach my $file (sort @$files) {
-    P6::Util::debug("FILE: $file\n");
+#    P6::Util::debug("FILE: $file\n");
     my $func = "";
     my $in_func = 1;
     my $arg_end = 0;
@@ -225,7 +249,7 @@ sub parse {
 
 	my $name = $func;
 	$name =~ s/\(\)//;
-	P6::Util::debug("\tFUNC: $name\n");
+#	P6::Util::debug("\tFUNC: $name\n");
 
 	$funcs->{$func}->{name} = $name;
 	$funcs->{$func}->{file} = $file;
@@ -246,6 +270,24 @@ sub parse {
 
 #	P6::Util::debug_dumper("arg", $arg);
 	push @{$funcs->{$func}->{args}}, $arg;
+      }
+
+      if ($line =~ /([A-Z_]{3,})/) {
+	my $global_or_env=$1;
+#	P6::Util::debug("ge: [$global_or_env]\n");
+
+	if ($global_or_env =~ /^P6_/) {
+	  $funcs->{$func}->{globals}->{$global_or_env}++;
+	}
+	else {
+	  $funcs->{$func}->{envs}->{$global_or_env}++;
+	}
+      }
+
+      if ($line =~ /\sp6_([a-zA-Z0-9]+)/) {
+	my $depends = $1;
+#	P6::Util::debug("depends: [$depends]\n");
+	$funcs->{$func}->{depends}->{$depends}++;
       }
 
       my $rv = {};
