@@ -49,28 +49,26 @@ sub doc_gen_func {
 
   my $args = $func->{args};
 
-  my $str = "#\t";
+  my $str = "# Function:\n";
+  $str .= "#\t";
 
-  if ($rv) {
-    {
-      no warnings qw(uninitialized);
-      $str .= $rv->{type};
-      $str .= "($rv->{name})" if $func->{type} ne "void";
-    }
-    $str .= " = ";
+  if ($rv && $rv->{type} ne "void") {
+    no warnings qw(uninitialized);
+    $str .= "$rv->{type} $rv->{name} = ";
   }
 
   $str .= "$func->{name}";
 
   $str .= "(";
   foreach my $arg (@$args) {
-    $str .= "[" if $arg->{default};
+    $str .= "[" if exists $arg->{default};
     $str .= "$arg->{name}";
-    $str .= "=$arg->{default}" if $arg->{default};
-    $str .= "]" if $arg->{default};
-    $str .= ",";
+    $str .= "=$arg->{default}" if exists $arg->{default};
+    $str .= "]" if exists $arg->{default};
+    $str .= ", ";
   }
-  $str =~ s/,$/)/;
+  $str =~ s/, $/)/;
+  $str .= ")" unless $str =~ /\)$/;
 
   $str;
 }
@@ -78,10 +76,15 @@ sub doc_gen_func {
 sub doc_gen_args {
   my $args = shift;
 
-  my $str = "";
+  my $str = "#  Args:\n";
+
   foreach my $arg (@$args) {
     no warnings qw(uninitialized);
-    $str .= "#\t$arg->{name} - $arg->{comment}\n";
+    $str .= "#\t";
+    $str .= "OPTIONAL " if exists $arg->{default};
+    $str .= "$arg->{name} - $arg->{comment}";
+    $str .= " [$arg->{default}]" if exists $arg->{default};
+    $str .= "\n";
   }
 
   $str;
@@ -90,11 +93,22 @@ sub doc_gen_args {
 sub doc_gen_returns {
   my $rvs = shift;
 
-  my $str = "";
+  my @non_voids = grep { $_->{type} ne "void" } @$rvs;
+  return unless @non_voids;
+
+  my $str;
+
+  $str .= "#  Returns:\n";
+  P6::Util::debug_dumper("rvs", $rvs);
+
   foreach my $rv (@$rvs) {
     no warnings qw(uninitialized);
-    $str .= "#\t$rv->{type} - $rv->{name}\n";
+    next if $rv->{type} eq "void";
+    $str .= "#\t$rv->{type} - $rv->{name}";
+    $str .= ": $rv->{comment}\n" if $rv->{comment};
   }
+  $str .= "\n" unless $str =~ /\n$/;
+  $str .= "#\n";
 
   $str;
 }
@@ -114,20 +128,17 @@ sub doc_gen() {
     my @doc_lines = ();
     push @doc_lines, "#<";
     push @doc_lines, "#";
-    push @doc_lines, "# Function:";
     push @doc_lines, doc_gen_func($func);
     push @doc_lines, "#";
 
     if ($func->{args}) {
-      push @doc_lines, "#  Args:";
       push @doc_lines, doc_gen_args($func->{args});
       push @doc_lines, "#";
     }
-    if ($func->{rv}) {
-      push @doc_lines, "#  Returns:";
+    if ($func->{rvs}) {
       push @doc_lines, doc_gen_returns($func->{rvs});
-      push @doc_lines, "#>";
     }
+    push @doc_lines, "#>";
 
     $func->{doc_lines} = \@doc_lines;
   }
@@ -234,33 +245,34 @@ sub parse {
 	my $arg = {};
 	$arg->{name} = $1;
 
-	$arg->{default} = $1 if $line =~ /:-([^}]+)\}/;
+	$arg->{default} = $1 if $line =~ /:-([^}]*)\}/;
 	$arg->{comment} = $1 if $line =~ /# (.*)$/;
 
-	P6::Util::debug_dumper("arg", $arg);
+#	P6::Util::debug_dumper("arg", $arg);
 	push @{$funcs->{$func}->{args}}, $arg;
       }
 
       my $rv = {};
       if ($line =~ /^\s+p6_return_($types_re)/) {
 	$rv->{type} = $1;
-	P6::Util::debug("\treturn: $line");
+#	P6::Util::debug("\treturn: $line");
 
 	$rv->{name} = $1 if $line =~ /\"([^\"]+)\"/;
       }
       if ($line =~ /^\s+p6_return /) {
 	$rv->{type} = "unkown";
-	P6::Util::debug("\treturn_legacy: $line");
+#	P6::Util::debug("\treturn_legacy: $line");
 
 	$rv->{name} = $1 if $line =~ /\"([^\"]+)\"/;
       }
 
       if ($rv->{type}) {
 	$rv->{name} = "" unless $rv->{name};
+	$rv->{name} =~ s/^\$//;
 
 	$rv->{comment} = $1 if $line =~ /# (.*)$/;
 
-	P6::Util::debug_dumper("rv", $rv);
+#	P6::Util::debug_dumper("rv", $rv);
 	push @{$funcs->{$func}->{rvs}}, $rv;
       }
 
