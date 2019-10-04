@@ -70,7 +70,7 @@ sub doc_gen_func {
   $str =~ s/, $/)/;
   $str .= ")" unless $str =~ /\)$/;
 
-  $str .= "#\n";
+  $str .= "\n#\n";
 
   $str;
 }
@@ -156,8 +156,8 @@ sub doc_gen() {
     push @doc_lines, doc_gen_func($func);
     push @doc_lines, doc_gen_args($func->{args})       if $func->{args};
     push @doc_lines, doc_gen_returns($func->{rvs})     if $func->{rvs};
-    push @doc_lines, doc_gen_depends($func->{depends}) if $func->{depends};
-    push @doc_lines, doc_gen_envs($func->{envs})       if $func->{envs};
+#    push @doc_lines, doc_gen_depends($func->{depends}) if $func->{depends};
+#    push @doc_lines, doc_gen_envs($func->{envs})       if $func->{envs};
 
     push @doc_lines, "#>";
 
@@ -218,7 +218,8 @@ sub splice_in() {
 sub parse {
   my $self = shift;
 
-  my @types = (qw(array bool code false hash int list size str true void));
+  my @types = (qw(array bool code false int path size_t str true void));
+  push @types, (qw(item_ref obj_ref));
   my $types_re = join '|', @types;
   P6::Util::debug("types_re=[$types_re]\n");
 
@@ -297,6 +298,7 @@ sub parse {
 
 	$rv->{name} = $1 if $line =~ /\"([^\"]+)\"/;
       }
+      # XXX: remove when all p6_return replaced
       if ($line =~ /^\s+p6_return /) {
 	$rv->{type} = "unkown";
 #	P6::Util::debug("\treturn_legacy: $line");
