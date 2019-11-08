@@ -262,7 +262,7 @@ sub parse {
 	$arg_end = 1;
       }
 
-      if (!$arg_end && $line =~ /^\s+local ([a-zA-Z_][a-zA-z0-9_]+)=/) {
+      if (!$arg_end && $line =~ /^\s+local ([a-zA-Z_][a-zA-z0-9_]*)=/) {
 	my $arg = {};
 	$arg->{name} = $1;
 
