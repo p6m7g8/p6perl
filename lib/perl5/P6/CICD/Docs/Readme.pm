@@ -77,7 +77,7 @@ sub parse {
     my $lines = P6::IO::dread($file);
     foreach my $line (@$lines) {
       #      P6::Util::debug(" LINE: $line\n");
-      if ($line =~ /Function: (p6_[^(]+)/) {
+      if ($line =~ /# Function: (.*)/) {
 	push @{$funcs->{$file}}, $1;
       }
     }

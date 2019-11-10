@@ -217,7 +217,7 @@ sub splice_in() {
 sub parse {
   my $self = shift;
 
-  my @types = (qw(array bool code false int path size_t str true void));
+  my @types = (qw(array bool code false int path size_t words str true void obj hash list string scalar item));
   push @types, (qw(item_ref obj_ref));
   my $types_re = join '|', @types;
   P6::Util::debug("types_re=[$types_re]\n");
