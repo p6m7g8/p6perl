@@ -49,8 +49,7 @@ sub doc_gen_func {
 
   my $args = $func->{args};
 
-  my $str = "# Function:\n";
-  $str .= "#\t";
+  my $str = "# Function: ";
 
   if ($rv && $rv->{type} ne "void") {
     no warnings qw(uninitialized);
