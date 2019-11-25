@@ -272,6 +272,16 @@ sub parse {
 	push @{$funcs->{$func}->{args}}, $arg;
       }
 
+      if (!$arg_end && $line =~ /^\s+shift (\d+?)/) {
+	my $comment;
+	$comment = $1 if $line =~ /# (.*)$/;
+	my $arg = {
+		   name    => "...",
+		   comment => $comment,
+		  };
+	push @{$funcs->{$func}->{args}}, $arg;
+      }
+
       if ($line =~ /([A-Z_]{3,})/) {
 	my $global_or_env=$1;
 #	P6::Util::debug("ge: [$global_or_env]\n");
