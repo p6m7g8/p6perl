@@ -65,6 +65,8 @@ sub scan {
   my ($dir, $regex, %args) = @_;
 
   my @files = ();
+  return \@files unless -d $dir;
+  
   File::Find::find sub {
     return unless /$regex/;
     if ($args{files_only}) {

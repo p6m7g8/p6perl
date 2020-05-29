@@ -179,7 +179,7 @@ sub splice_in() {
   my $funcs = $self->funcs();
 
   foreach my $file (sort @$files) {
-    P6::Util::debug("$file\n");
+#    P6::Util::debug("$file\n");
     my $doc_in = 0;
     my $func = "";
     my @new_lines = ();
@@ -220,7 +220,7 @@ sub parse {
   my @types = (qw(array bool code false int path size_t words str true void obj hash list string scalar item aws_arn aws_account_id aws_resource_id aws_logical_id aws_cfg));
   push @types, (qw(item_ref obj_ref));
   my $types_re = join '|', @types;
-  P6::Util::debug("types_re=[$types_re]\n");
+#  P6::Util::debug("types_re=[$types_re]\n");
 
   my $lib_dir = $self->module() . "/lib";
   P6::Util::debug("lib_dir: $lib_dir\n");
