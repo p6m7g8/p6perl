@@ -23,71 +23,76 @@ use P6::Util ();
 ## private
 sub _fields {
 
-  {
-    module => "",
-    funcs => {},
-  }
+	{
+		module => "",
+		funcs => {},
+	}
 }
+
 
 sub _post_init {
-  my $self = shift;
-  my %args = @_;
+	my $self = shift;
+	my %args = @_;
 
-  $self->parse();
-  $self->readme_gen();
+	$self->parse();
+	$self->readme_gen();
 
-  return;
+	return;
 }
+
 
 sub readme_gen() {
-  my $self = shift;
-  my %args = @_;
+	my $self = shift;
+	my %args = @_;
 
-  my $module = $self->module();
+	my $module = $self->module();
 
-  my $funcs = $self->funcs();
-  foreach my $file (sort keys %{$self->funcs()}) {
-    my $section = (split /\//, $file)[-1];
+	my $funcs = $self->funcs();
+	foreach my $file (sort keys %{$self->funcs()}) {
+		my $section = (split /\//, $file)[-1];
 
-    print "### $section:\n";
+		print "### $section:\n";
 
-    my @funcs = sort @{$funcs->{$file}};
-    foreach my $func (@funcs) {
-      next if $func =~ /__/;
-      print "- $func\n";
-    }
-    print "\n";
-  }
+		my @funcs = sort @{$funcs->{$file}};
+		foreach my $func (@funcs) {
+			next if $func =~ /__/;
+			print "- $func\n";
+		}
+		print "\n";
+	}
 
-  return;
+	return;
 }
 
+
 sub parse {
-  my $self = shift;
+	my $self = shift;
 
-  my $lib_dir = $self->module() . "/lib";
-  P6::Util::debug("lib_dir: $lib_dir\n");
+	my $lib_dir = $self->module() . "/lib";
+	P6::Util::debug("lib_dir: $lib_dir\n");
 
-  my $files = P6::IO::scan($lib_dir, qr/\.sh$/, files_only => 1);
+	my $files = P6::IO::scan($lib_dir, qr/\.sh$/, files_only => 1);
 
-  my $funcs = {};
-  foreach my $file (sort @$files) {
-    #    P6::Util::debug("FILE: $file\n");
+	my $funcs = {};
+	foreach my $file (sort @$files) {
 
-    my $lines = P6::IO::dread($file);
-    foreach my $line (@$lines) {
-      #      P6::Util::debug(" LINE: $line\n");
-      if ($line =~ /# Function: (.*)/) {
-	push @{$funcs->{$file}}, $1;
-      }
-    }
-  }
+		#    P6::Util::debug("FILE: $file\n");
 
-  $self->funcs($funcs);
+		my $lines = P6::IO::dread($file);
+		foreach my $line (@$lines) {
 
-  # P6::Util::debug_dumper "FUNCS", $funcs;
+			#      P6::Util::debug(" LINE: $line\n");
+			if ($line =~ /# Function: (.*)/) {
+				push @{$funcs->{$file}}, $1;
+			}
+		}
+	}
 
-  return;
+	$self->funcs($funcs);
+
+	# P6::Util::debug_dumper "FUNCS", $funcs;
+
+	return;
 }
 
 sub tmpl_paths { "$ENV{PERL5LIB}/../../tt" }
