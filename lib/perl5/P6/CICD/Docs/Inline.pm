@@ -181,8 +181,7 @@ sub splice_in() {
 	my $self = shift;
 	my %args = @_;
 
-	my $lib_dir = $self->module() . "/lib";
-	my $files = P6::IO::scan($lib_dir, "\.sh\$", files_only => 1);
+	my $files = $self->files();
 	my $mark = "#" x 70;
 
 	my $funcs = $self->funcs();
@@ -202,7 +201,7 @@ sub splice_in() {
 			next if $doc_in;
 			next if $line =~ /^#\//;
 
-			if ($line =~ /^p6_/) {
+			if ($line =~ /^p6_|^p6df/) {
 				my $fname = $line;
 				$fname =~ s/\s+.*//g;
 
@@ -226,6 +225,22 @@ sub splice_in() {
 }
 
 
+sub files() {
+	my $self = shift;
+
+	my $module_dir = $self->module();
+	my $lib_dir = "$module_dir/lib";
+	P6::Util::debug("lib_dir: $lib_dir\n");
+
+	my $files = P6::IO::scan($lib_dir, qr/\.sh$/, files_only => 1);
+	push @$files, "$module_dir/init.zsh" if -e "$module_dir/init.zsh";
+
+	P6::Util::debug_dumper("FILES", $files);
+
+	$files;
+}
+
+
 sub parse {
 	my $self = shift;
 
@@ -235,10 +250,7 @@ sub parse {
 
 	#  P6::Util::debug("types_re=[$types_re]\n");
 
-	my $lib_dir = $self->module() . "/lib";
-	P6::Util::debug("lib_dir: $lib_dir\n");
-
-	my $files = P6::IO::scan($lib_dir, qr/\.sh$/, files_only => 1);
+	my $files = $self->files();
 
 	my $funcs = {};
 	my $extra_docs = [];
@@ -255,7 +267,7 @@ sub parse {
 				push @$extra_docs, $line;
 			}
 
-			if ($line =~ /^p6_/) {
+			if ($line =~ /^p6_|^p6df/) {
 				$in_func = 1;
 
 				$line =~ s/\s+.*//g;
@@ -264,7 +276,7 @@ sub parse {
 				my $name = $func;
 				$name =~ s/\(\)//;
 
-				#	P6::Util::debug("\tFUNC: $name\n");
+				P6::Util::debug("\tFUNC: $name\n");
 
 				$funcs->{$func}->{name} = $name;
 				$funcs->{$func}->{file} = $file;

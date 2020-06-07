@@ -65,13 +65,26 @@ sub readme_gen() {
 }
 
 
-sub parse {
+sub files() {
 	my $self = shift;
 
-	my $lib_dir = $self->module() . "/lib";
+	my $module_dir = $self->module();
+	my $lib_dir = "$module_dir/lib";
 	P6::Util::debug("lib_dir: $lib_dir\n");
 
 	my $files = P6::IO::scan($lib_dir, qr/\.sh$/, files_only => 1);
+	push @$files, "$module_dir/init.zsh" if -e "$module_dir/init.zsh";
+
+	P6::Util::debug_dumper("FILES", $files);
+
+	$files;
+}
+
+
+sub parse {
+	my $self = shift;
+
+	my $files = $self->files();
 
 	my $funcs = {};
 	foreach my $file (sort @$files) {
