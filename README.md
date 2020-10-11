@@ -3,5 +3,4 @@
 - p6df::modules::p6perl::deps()
 - p6df::modules::p6perl::external::brew()
 - p6df::modules::p6perl::init()
-- p6df::modules::p6perl::version()
 
