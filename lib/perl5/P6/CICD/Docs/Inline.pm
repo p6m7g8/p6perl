@@ -30,7 +30,6 @@ sub _fields {
 	}
 }
 
-
 sub _post_init {
 	my $self = shift;
 	my %args = @_;
@@ -41,7 +40,6 @@ sub _post_init {
 
 	return;
 }
-
 
 sub doc_gen_func {
 	my $func = shift;
@@ -76,7 +74,6 @@ sub doc_gen_func {
 	$str;
 }
 
-
 sub doc_gen_args {
 	my $args = shift;
 
@@ -94,7 +91,6 @@ sub doc_gen_args {
 
 	$str;
 }
-
 
 sub doc_gen_returns {
 	my $rvs = shift;
@@ -116,7 +112,6 @@ sub doc_gen_returns {
 	$str;
 }
 
-
 sub doc_gen_depends {
 	my $depends = shift;
 
@@ -130,7 +125,6 @@ sub doc_gen_depends {
 	$str;
 }
 
-
 sub doc_gen_envs {
 	my $envs = shift;
 
@@ -142,7 +136,6 @@ sub doc_gen_envs {
 
 	$str;
 }
-
 
 sub doc_gen() {
 	my $self = shift;
@@ -176,7 +169,6 @@ sub doc_gen() {
 	return;
 }
 
-
 sub splice_in() {
 	my $self = shift;
 	my %args = @_;
@@ -187,14 +179,14 @@ sub splice_in() {
 	my $funcs = $self->funcs();
 
 	foreach my $file (sort @$files) {
-
-		#    P6::Util::debug("$file\n");
+		P6::Util::debug("splice: $file\n");
 		my $doc_in = 0;
 		my $func = "";
 		my @new_lines = ();
 
 		my @lines = grep { chomp; 1 } @{P6::IO::dread($file)};
 		foreach my $line (@lines) {
+			P6::Util::debug("LINE: $line\n");
 			next if $line =~ /^$mark/;
 			$doc_in = 1, next if $line =~ /^#</;
 			$doc_in = 0, next if $line =~ /^#>/;
@@ -205,7 +197,7 @@ sub splice_in() {
 				my $fname = $line;
 				$fname =~ s/\s+.*//g;
 
-				#	P6::Util::debug("DEF: $fname\n");
+				P6::Util::debug("DEF: $fname\n");
 
 				$func = $funcs->{$fname};
 				push @new_lines, $mark;
@@ -224,7 +216,6 @@ sub splice_in() {
 	return;
 }
 
-
 sub files() {
 	my $self = shift;
 
@@ -232,14 +223,13 @@ sub files() {
 	my $lib_dir = "$module_dir/lib";
 	P6::Util::debug("lib_dir: $lib_dir\n");
 
-	my $files = P6::IO::scan($lib_dir, qr/\.sh$/, files_only => 1);
+	my $files = P6::IO::scan($lib_dir, qr/\.sh$|\.zsh$/, files_only => 1);
 	push @$files, "$module_dir/init.zsh" if -e "$module_dir/init.zsh";
 
 	P6::Util::debug_dumper("FILES", $files);
 
 	$files;
 }
-
 
 sub parse {
 	my $self = shift;
@@ -248,7 +238,7 @@ sub parse {
 	push @types, (qw(item_ref obj_ref));
 	my $types_re = join '|', @types;
 
-	#  P6::Util::debug("types_re=[$types_re]\n");
+	P6::Util::debug("types_re=[$types_re]\n");
 
 	my $files = $self->files();
 
@@ -256,7 +246,7 @@ sub parse {
 	my $extra_docs = [];
 	foreach my $file (sort @$files) {
 
-		#    P6::Util::debug("FILE: $file\n");
+		P6::Util::debug("FILE: $file\n");
 		my $func = "";
 		my $in_func = 1;
 		my $arg_end = 0;
@@ -295,7 +285,7 @@ sub parse {
 				$arg->{default} = $1 if $line =~ /:-([^}]*)\}/;
 				$arg->{comment} = $1 if $line =~ /# (.*)$/;
 
-				#	P6::Util::debug_dumper("arg", $arg);
+				P6::Util::debug_dumper("arg", $arg);
 				push @{$funcs->{$func}->{args}}, $arg;
 			}
 
@@ -312,11 +302,12 @@ sub parse {
 			if ($line =~ /([A-Z_]{3,})/) {
 				my $global_or_env=$1;
 
-				#	P6::Util::debug("ge: [$global_or_env]\n");
+				P6::Util::debug("ge: [$global_or_env]\n");
 
 				if ($global_or_env =~ /^P6_/) {
 					$funcs->{$func}->{globals}->{$global_or_env}++;
-				}else {
+				}
+				else {
 					$funcs->{$func}->{envs}->{$global_or_env}++;
 				}
 			}
@@ -324,7 +315,7 @@ sub parse {
 			if ($line =~ /\sp6_([a-zA-Z0-9]+)/) {
 				my $depends = $1;
 
-				#	P6::Util::debug("depends: [$depends]\n");
+				P6::Util::debug("depends: [$depends]\n");
 				$funcs->{$func}->{depends}->{$depends}++;
 			}
 
@@ -332,7 +323,7 @@ sub parse {
 			if ($line =~ /^\s+p6_return_($types_re)/) {
 				$rv->{type} = $1;
 
-				#	P6::Util::debug("\treturn: $line");
+				P6::Util::debug("\treturn: $line");
 
 				$rv->{name} = $1 if $line =~ /\"([^\"]+)\"/;
 			}
@@ -341,7 +332,7 @@ sub parse {
 			if ($line =~ /^\s+p6_return /) {
 				$rv->{type} = "unkown";
 
-				#	P6::Util::debug("\treturn_legacy: $line");
+				P6::Util::debug("\treturn_legacy: $line");
 
 				$rv->{name} = $1 if $line =~ /\"([^\"]+)\"/;
 			}
@@ -352,7 +343,7 @@ sub parse {
 
 				$rv->{comment} = $1 if $line =~ /# (.*)$/;
 
-				#	P6::Util::debug_dumper("rv", $rv);
+				P6::Util::debug_dumper("rv", $rv);
 				push @{$funcs->{$func}->{rvs}}, $rv;
 			}
 
