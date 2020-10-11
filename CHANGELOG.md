@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0](https://github.com/p6m7g8/p6perl/compare/v0.0.1...v1.0.0) (2020-10-11)
+
+
+### Bug Fixes
+
+* **deps:** depends on `p6m7g8/p6common`, ws, uncomment debug, add zsh, add p6df ([#8](https://github.com/p6m7g8/p6perl/issues/8)) ([fd32062](https://github.com/p6m7g8/p6perl/commit/fd3206274a79d5928ebfd9313edd6406b12a37c8))
+
 ### [0.0.1](https://github.com/p6m7g8/p6perl/compare/v0.0.0...v0.0.1) (2020-09-20)
 
 
