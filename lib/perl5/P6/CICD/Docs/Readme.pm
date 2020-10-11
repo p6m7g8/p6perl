@@ -72,7 +72,7 @@ sub files() {
 	my $lib_dir = "$module_dir/lib";
 	P6::Util::debug("lib_dir: $lib_dir\n");
 
-	my $files = P6::IO::scan($lib_dir, qr/\.sh$/, files_only => 1);
+	my $files = P6::IO::scan($lib_dir, qr/\.sh$|\.zsh$/, files_only => 1);
 	push @$files, "$module_dir/init.zsh" if -e "$module_dir/init.zsh";
 
 	P6::Util::debug_dumper("FILES", $files);
