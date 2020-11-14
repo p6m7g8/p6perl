@@ -83,8 +83,8 @@ sub doc_gen_args {
         no warnings qw(uninitialized);
         $str .= "#\t";
         $str .= "OPTIONAL " if exists $arg->{default};
-        $str .= "$arg->{name}";
-        $str .= " - $arg->{comment}" if exists $arg->{comment};
+        $str .= "$arg->{name} -";
+        $str .= " $arg->{comment}"   if exists $arg->{comment};
         $str .= " [$arg->{default}]" if exists $arg->{default};
         $str .= "\n";
     }
