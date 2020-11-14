@@ -83,7 +83,8 @@ sub doc_gen_args {
         no warnings qw(uninitialized);
         $str .= "#\t";
         $str .= "OPTIONAL " if exists $arg->{default};
-        $str .= "$arg->{name} - $arg->{comment}";
+        $str .= "$arg->{name}";
+        $str .= " - $arg->{comment}" if exists $arg->{comment};
         $str .= " [$arg->{default}]" if exists $arg->{default};
         $str .= "\n";
     }
@@ -234,7 +235,9 @@ sub files() {
 sub parse {
     my $self = shift;
 
-    my @types = (qw(array bool code false int path size_t words str true void obj hash list string scalar item aws_arn aws_account_id aws_resource_id aws_logical_id aws_cfg));
+    my @types = (
+        qw(array bool code false int path size_t words str true void obj hash list string scalar item aws_arn aws_account_id aws_resource_id aws_logical_id aws_cfg)
+    );
     push @types, (qw(item_ref obj_ref));
     my $types_re = join '|', @types;
 
