@@ -194,7 +194,7 @@ sub splice_in() {
             next if $doc_in;
             next if $line =~ /^#\//;
 
-            if ( $line =~ /^p6_|^p6df/ ) {
+            if ( $line =~ /^smile|^p6_|^p6df/ ) {
                 my $fname = $line;
                 $fname =~ s/\s+.*//g;
 
@@ -260,7 +260,7 @@ sub parse {
                 push @$extra_docs, $line;
             }
 
-            if ( $line =~ /^p6_|^p6df/ ) {
+            if ( $line =~ /^smile|^p6_|^p6df/ ) {
                 $in_func = 1;
 
                 $line =~ s/\s+.*//g;
@@ -315,7 +315,7 @@ sub parse {
                 }
             }
 
-            if ( $line =~ /\sp6_([a-zA-Z0-9]+)/ ) {
+            if ( $line =~ /\s(?:smile|p6)_([a-zA-Z0-9]+)/ ) {
                 my $depends = $1;
 
                 P6::Util::debug("depends: [$depends]\n");

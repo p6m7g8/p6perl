@@ -29,8 +29,8 @@ our $VERSION = q$Revision: 50616 $;
 ## constants
 
 ## globals
-our $Debug   = 1;
-our $Verbose = 1;
+our $Debug   = 0;
+our $Verbose = 0;
 our $Execute = 1;
 
 sub msg          { print STDOUT $_[0]                                       }
