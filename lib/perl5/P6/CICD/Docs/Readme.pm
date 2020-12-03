@@ -6,6 +6,8 @@ use strict;
 use warnings FATAL => 'all';
 use Carp;
 
+use File::Basename ();
+
 ## Std
 
 ## CPAN
@@ -44,8 +46,7 @@ sub readme_gen() {
     my %args = @_;
 
     my $module = $self->module();
-
-    print "TAG LINE\n";
+    $module = File::Basename::basename($module);
 
     print "# $module\n\n";
 
@@ -67,6 +68,8 @@ sub readme_gen() {
 [![License](https://img.shields.io/badge/License-Apache%202.0-yellowgreen.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/p6m7g8/$module)
 [![Mergify](https://img.shields.io/endpoint.svg?url=https://gh.mergify.io/badges/p6m7g8/$module/&style=flat)](https://mergify.io)
+[![codecov](https://codecov.io/gh/p6m7g8/$module/branch/master/graph/badge.svg?token=14Yj1fZbew)](https://codecov.io/gh/p6m7g8/$module)
+[![Known Vulnerabilities](https://snyk.io/test/github/p6m7g8/$module/badge.svg?targetFile=package.json)](https://snyk.io/test/github/p6m7g8/$module?targetFile=package.json)
 
 ## Summary
 
