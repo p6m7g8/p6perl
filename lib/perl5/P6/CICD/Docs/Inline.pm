@@ -105,7 +105,12 @@ sub doc_gen_returns {
         no warnings qw(uninitialized);
         next if $rv->{type} eq "void";
         $str .= "#\t$rv->{type} - $rv->{name}";
-        $str .= ": $rv->{comment}\n" if $rv->{comment};
+        if ($rv->{comment}) {
+          $str .= ": $rv->{comment}\n";
+        }
+        else {
+          $str .= "\n";
+        }
     }
     $str .= "\n" unless $str =~ /\n$/;
     $str .= "#\n";
